@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/supabaseClient'
+// 🌟 استخدام مسار نسبي مباشر ومضمون 100% لتخطي أخطاء الـ Build في فيرسل
+import { supabase } from '../../../supabaseClient'
 
 export async function POST(request: Request) {
   try {
@@ -25,9 +26,8 @@ export async function POST(request: Request) {
       .select()
 
     if (error) {
-      // إذا كان الرابط مضافاً مسبقاً، يمنع انهيار السيرفر ويعلمك بذلك
       if (error.code === '23505') {
-        return NextResponse.json({ message: '🔄 هذا الرابط مؤرشف بالفعل في محرك onbsearch وتحديث كشافاته تلقائي.' }, { status: 200 })
+        return NextResponse.json({ message: '🔄 هذا الرابط مؤرشف بالفعل وتحديث كشافاته تلقائي.' }, { status: 200 })
       }
       throw error
     }
@@ -43,3 +43,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'فشل السيرفر في معالجة البيانات: ' + err.message }, { status: 500 })
   }
 }
+
