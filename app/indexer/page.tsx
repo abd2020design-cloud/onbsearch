@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '../../supabaseClient' // استدعاء عقل سوبابيز المباشر
 
 export default function AdminIndexerPage() {
   const [loading, setLoading] = useState(false)
@@ -22,19 +23,24 @@ export default function AdminIndexerPage() {
     setLoading(true)
 
     try {
-      // إرسال طلب الأرشفة الفوري لعقل الزاحف الآلي API المدمج بالموقع
-      const response = await fetch('/api/crawl', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
+      // 🌟 خطة إنقاذ خارقة: حقن وأرشفة البيانات مباشرة بداخل Supabase Pro وتخطي الـ API المعلق!
+      const { data, error } = await supabase
+        .from('onb_web_index')
+        .insert([
+          {
+            url: formData.url_to_index,
+            title: formData.custom_title,
+            description: formData.custom_desc || '',
+            category: formData.category_type || 'web',
+            country_code: formData.country || 'ALL'
+          }
+        ])
+        .select()
 
-      const result = await response.json()
       setLoading(false)
 
-      if (response.ok) {
-        alert(`✓ ${result.message || 'تمت الأرشفة بنجاح!'}`)
-        // إعادة تصفير الاستمارة استعداداً لموقع آخر
+      if (!error) {
+        alert('🚀 نجاح خارق ومباشر! تم سحب وتصنيف موقعك بداخل كشافات البحث الفورية بنجاح التخطي السحابي.')
         setFormData({
           url_to_index: '',
           custom_title: '',
@@ -43,7 +49,12 @@ export default function AdminIndexerPage() {
           country: 'ALL'
         })
       } else {
-        alert(`🚨 خطأ من السيرفر: ${result.error}`)
+        // حماية البيانات مؤرشفة مسبقاً
+        if (error.code === '23505') {
+          alert('🔄 هذا الرابط مؤرشف بالفعل في محرك onbsearch وتحديث كشافاته تلقائي.')
+        } else {
+          alert(`🚨 خطأ سوبابيز: ${error.message}`)
+        }
       }
 
     } catch (err: any) {
@@ -59,14 +70,13 @@ export default function AdminIndexerPage() {
         <header className="mb-8 border-b border-gray-100 pb-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="bg-red-50 text-red-600 font-bold px-2.5 py-0.5 rounded text-[10px] uppercase">الأدمن فقط</span>
-            <span className="bg-gray-950 text-white font-black text-xs px-2 py-0.5 rounded">1B Crawler</span>
+            <span className="bg-gray-950 text-white font-black text-xs px-2 py-0.5 rounded">1B Direct Injector</span>
           </div>
           <h1 className="text-2xl font-black text-gray-900">لوحة تحكم كشافات الأرشفة والزواحف 🤖</h1>
           <p className="text-gray-500 text-xs mt-1">بصفتك المالك، يمكنك حقن وأرشفة صفحات الويب، السلع، العقارات حياً داخل محرك بحث onbsearch.</p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* رابط الصفحة المراد زحفها */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-2">الرابط المطلق للموقع (URL) *</label>
             <input 
@@ -80,7 +90,6 @@ export default function AdminIndexerPage() {
             />
           </div>
 
-          {/* العنوان المؤرشف */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-2">عنوان الصفحة أو السلعة في البحث *</label>
             <input 
@@ -94,7 +103,6 @@ export default function AdminIndexerPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* تصنيف البيانات المدمج */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-2">تصنيف البيانات (مكان الأرشفة)</label>
               <select 
@@ -107,7 +115,6 @@ export default function AdminIndexerPage() {
                 <option value="realestate">🏢 العقارات والأراضي</option>
               </select>
             </div>
-            {/* تحديد نطاق الدولة الإقليمي */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-2">النطاق الجغرافي للدولة</label>
               <select 
@@ -123,7 +130,6 @@ export default function AdminIndexerPage() {
             </div>
           </div>
 
-          {/* محتوى ونص الصفحة الكامل الكشاف */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-2">المحتوى النصي الكامل والأوصاف المفتاحية</label>
             <textarea 
@@ -135,13 +141,12 @@ export default function AdminIndexerPage() {
             ></textarea>
           </div>
 
-          {/* زر حقن المارد */}
           <button 
             type="submit" 
             disabled={loading} 
             className="w-full bg-gray-950 text-white font-bold py-3.5 rounded-xl hover:bg-blue-600 transition disabled:bg-gray-400 text-sm shadow-sm"
           >
-            {loading ? 'جاري تشغيل زاحف 1B وضخ البيانات بالسيرفر...' : 'تشغيل الزاحف وحقن البيانات فوراً ←'}
+            {loading ? 'جاري ضخ البيانات حياً بالسيرفر المرقّى...' : 'تشغيل الزاحف وحقن البيانات فوراً ←'}
           </button>
         </form>
 
@@ -149,3 +154,4 @@ export default function AdminIndexerPage() {
     </main>
   )
 }
+
