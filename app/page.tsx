@@ -28,7 +28,7 @@ export default function OnbSearchHome() {
           .limit(5)
 
         if (!error && data) {
-          const uniqueTitles = Array.from(new Set(data.map(item => item.title)))
+          const uniqueTitles = Array.from(new Set(data.map((item: any) => item.title)))
           setSuggestions(uniqueTitles)
         }
       } catch (err) {
@@ -39,7 +39,7 @@ export default function OnbSearchHome() {
     return () => clearTimeout(delayDebounceFn)
   }, [searchQuery, activeTab])
 
-  // 🌟 دالة البحث المصححة بأسهل وأضمن صياغة نصوص في الويب
+  // دالة البحث المصححة بأسهل وأضمن صياغة نصوص في الويب متوافقة مع السيرفر
   const handleMasterSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
@@ -48,10 +48,10 @@ export default function OnbSearchHome() {
     setSearched(true)
     setSuggestions([])
 
-    // إذا كان البحث في الويب: نستخدم طريقة دمج النصوص العادية والمضمونة لفتح جوجل فوراً بالشكل الصحيح
+    // توجيه مستقر وآمن بدون علامات مائلة ومحمي تماماً
     if (activeTab === 'web') {
       setLoading(false)
-      const correctGoogleUrl = "https://google.com" + encodeURIComponent(searchQuery);
+      const correctGoogleUrl = "https://google.com" + encodeURIComponent(searchQuery)
       window.open(correctGoogleUrl, '_blank')
       return
     }
@@ -84,8 +84,8 @@ export default function OnbSearchHome() {
           🌐 شبكة منصات الألف مليون الإقليمية
         </div>
         <div className="flex gap-4 text-xs font-semibold text-gray-500">
-          <a href="https://onbcars.com" target="_blank" className="hover:text-blue-600 transition">🏎️ سوق السيارات</a>
-          <a href="https://onbcars.com/auctions" target="_blank" className="hover:text-blue-600 transition">🔨 المزادات الحية</a>
+          <a href="https://onbcars.com" target="_blank" className="hover:text-blue-600 transition" rel="noreferrer">🏎️ سوق السيارات</a>
+          <a href="https://onbcars.com/auctions" target="_blank" className="hover:text-blue-600 transition" rel="noreferrer">🔨 المزادات الحية</a>
         </div>
       </header>
 
@@ -104,9 +104,9 @@ export default function OnbSearchHome() {
         )}
 
         <div className="flex gap-2 bg-gray-100 p-1 rounded-xl text-xs font-bold text-gray-600 shadow-inner">
-          <button onClick={() => { setActiveTab('web'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'web' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🔍 الويب العام</button>
-          <button onClick={() => { setActiveTab('cars'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'cars' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏎️ السيارات</button>
-          <button onClick={() => { setActiveTab('realestate'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'realestate' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏢 العقارات</button>
+          <button type="button" onClick={() => { setActiveTab('web'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'web' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🔍 الويب العام</button>
+          <button type="button" onClick={() => { setActiveTab('cars'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'cars' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏎️ السيارات</button>
+          <button type="button" onClick={() => { setActiveTab('realestate'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'realestate' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏢 العقارات</button>
         </div>
 
         <div className="w-full max-w-xl relative">
@@ -123,15 +123,16 @@ export default function OnbSearchHome() {
             </button>
           </form>
 
+          {/* لوحة الاقتراحات التلقائية المنسدلة القياسية */}
           {suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 bg-white border border-gray-150 rounded-2xl mt-2 shadow-lg overflow-hidden z-50 text-right">
               {suggestions.map((sugar, index) => (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => {
                     setSearchQuery(sugar)
                     setSuggestions([])
-                    setTimeout(() => { document.querySelector('form')?.requestSubmit() }, 50)
                   }}
                   className="w-full text-right px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-blue-600 border-b border-gray-50 last:border-0 flex items-center gap-2 transition"
                 >
@@ -169,5 +170,6 @@ export default function OnbSearchHome() {
     </main>
   )
 }
+
 
 
