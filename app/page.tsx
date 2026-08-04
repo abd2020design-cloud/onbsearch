@@ -7,55 +7,56 @@ export default function OnbSearchHome() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('web')
   const [results, setResults] = useState<any[]>([])
-  const [suggestions, setSuggestions] = useState<any[]>([]) // مصفوفة الاقتراحات الحية
+  const [suggestions, setSuggestions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
 
-  // 🌟 نظام جلب الاقتراحات التلقائية الحية أثناء الكتابة (Auto-complete)
+  // نظام جلب الاقتراحات التلقائية الحية أثناء الكتابة
   useEffect(() => {
     if (!searchQuery.trim() || activeTab === 'web') {
       setSuggestions([])
       return
     }
 
-    // ميزة حماية السيرفر (Debouncing): انتظر 250 ملي ثانية بعد توقف المستخدم عن الكتابة قبل جلب الاقتراحات
     const delayDebounceFn = setTimeout(async () => {
       try {
         const { data, error } = await supabase
           .from('onb_web_index')
           .select('title')
           .eq('category', activeTab)
-          .ilike('title', `%${searchQuery}%`) // البحث المطابق الجزئي السريع جداً بالفهارس
-          .limit(5) // عرض أعلى 5 اقتراحات ذكية فقط
+          .ilike('title', '%' + searchQuery + '%')
+          .limit(5)
 
         if (!error && data) {
-          // تنظيف الاقتراحات من الأسماء المكررة للجمال والتنسيق
           const uniqueTitles = Array.from(new Set(data.map(item => item.title)))
           setSuggestions(uniqueTitles)
         }
       } catch (err) {
-        console.error("🚨 خطأ أثناء جلب الاقتراحات:", err)
+        console.error(err)
       }
     }, 250)
 
     return () => clearTimeout(delayDebounceFn)
   }, [searchQuery, activeTab])
 
-  // دالة البحث الحقيقي والكامل
+  // 🌟 دالة البحث المصححة بأسهل وأضمن صياغة نصوص في الويب
   const handleMasterSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
 
     setLoading(true)
     setSearched(true)
-    setSuggestions([]) // إغلاق قائمة الاقتراحات عند بدء البحث
+    setSuggestions([])
 
+    // إذا كان البحث في الويب: نستخدم طريقة دمج النصوص العادية والمضمونة لفتح جوجل فوراً بالشكل الصحيح
     if (activeTab === 'web') {
       setLoading(false)
-      window.open(`https://google.com{encodeURIComponent(searchQuery)}`, '_blank')
+      const correctGoogleUrl = "https://google.com" + encodeURIComponent(searchQuery);
+      window.open(correctGoogleUrl, '_blank')
       return
     }
 
+    // البحث داخل قاعدة البيانات للأقسام الأخرى
     try {
       const { data, error } = await supabase
         .from('onb_web_index')
@@ -69,7 +70,6 @@ export default function OnbSearchHome() {
         setResults([])
       }
     } catch (err) {
-      console.error("🚨 خطأ في جلب النتائج:", err)
       setResults([])
     }
     
@@ -79,7 +79,6 @@ export default function OnbSearchHome() {
   return (
     <main className="min-h-screen bg-white text-right flex flex-col justify-between" dir="rtl">
       
-      {/* القائمة العلوية */}
       <header className="px-6 py-4 flex justify-between items-center border-b border-gray-50">
         <div className="flex items-center gap-2 font-bold text-xs bg-gray-100 px-3 py-1.5 rounded-full text-gray-600">
           🌐 شبكة منصات الألف مليون الإقليمية
@@ -90,10 +89,8 @@ export default function OnbSearchHome() {
         </div>
       </header>
 
-      {/* جسد محرك البحث */}
-      <div className="w-full max-w-3xl mx-auto px-4 py-16 flex flex-col items-center flex-1 space-y-8 relative">
+      <div className="w-full max-w-3xl mx-auto px-4 py-16 flex flex-col items-center flex-1 space-y-8">
         
-        {/* شعار البراند */}
         {!searched && (
           <div className="flex flex-col items-center justify-center gap-3 text-center">
             <div className="bg-gray-950 text-white font-black text-5xl w-24 h-24 rounded-[28px] flex items-center justify-center border border-gray-800 shadow-md">
@@ -106,14 +103,12 @@ export default function OnbSearchHome() {
           </div>
         )}
 
-        {/* أزرار الفلترة */}
         <div className="flex gap-2 bg-gray-100 p-1 rounded-xl text-xs font-bold text-gray-600 shadow-inner">
           <button onClick={() => { setActiveTab('web'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'web' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🔍 الويب العام</button>
           <button onClick={() => { setActiveTab('cars'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'cars' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏎️ السيارات</button>
           <button onClick={() => { setActiveTab('realestate'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'realestate' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏢 العقارات</button>
         </div>
 
-        {/* شريط البحث المطور مع لوحة الاقتراحات المنسدلة الجوجلية */}
         <div className="w-full max-w-xl relative">
           <form onSubmit={handleMasterSearch} className="w-full relative">
             <input 
@@ -128,21 +123,19 @@ export default function OnbSearchHome() {
             </button>
           </form>
 
-          {/* 🌟 لوحة الاقتراحات التلقائية المنسدلة (تظهر فقط أثناء الكتابة ووجود نتائج مسبقة) */}
           {suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 bg-white border border-gray-150 rounded-2xl mt-2 shadow-lg overflow-hidden z-50 text-right animate-fade-in">
+            <div className="absolute top-full left-0 right-0 bg-white border border-gray-150 rounded-2xl mt-2 shadow-lg overflow-hidden z-50 text-right">
               {suggestions.map((sugar, index) => (
                 <button
                   key={index}
                   onClick={() => {
                     setSearchQuery(sugar)
                     setSuggestions([])
-                    // تشغيل البحث تلقائياً عند الضغط على الاقتراح لراحة العميل
                     setTimeout(() => { document.querySelector('form')?.requestSubmit() }, 50)
                   }}
                   className="w-full text-right px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-blue-600 border-b border-gray-50 last:border-0 flex items-center gap-2 transition"
                 >
-                  <span className="text-gray-450 text-xs">🕒</span>
+                  <span>🕒</span>
                   <span>{sugar}</span>
                 </button>
               ))}
@@ -150,7 +143,6 @@ export default function OnbSearchHome() {
           )}
         </div>
 
-        {/* شاشة عرض نتائج البحث */}
         <section className="w-full max-w-xl space-y-6 pt-6">
           {loading && <p className="text-center text-sm text-gray-500 animate-pulse">جاري جلب وفحص البيانات بالذكاء الاصطناعي...</p>}
           
@@ -169,7 +161,6 @@ export default function OnbSearchHome() {
 
       </div>
 
-      {/* تذييل الصفحة */}
       <footer className="bg-gray-50 border-t border-gray-100 py-4 px-6 flex flex-col md:flex-row justify-between items-center gap-2 text-[10px] text-gray-400">
         <div>🔒 جميع حقوق الملكية الفكرية والأنظمة محفوظة لمؤسستك الرسمية لتقنية المعلومات © 2026</div>
         <div className="flex gap-4 font-bold text-gray-500">Node 1B Pro Powered</div>
@@ -178,4 +169,5 @@ export default function OnbSearchHome() {
     </main>
   )
 }
+
 
