@@ -4,27 +4,27 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 
 export default function OnbSearchHome() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeTab, setActiveTab] = useState('web')
+  const [query, setQuery] = useState('')
+  const [tab, setTab] = useState('web')
   const [results, setResults] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
 
-  // نظام جلب الاقتراحات التلقائية الحية أثناء الكتابة
+  // جلب الاقتراحات التلقائية الحية أثناء الكتابة
   useEffect(() => {
-    if (!searchQuery.trim() || activeTab === 'web') {
+    if (!query.trim() || tab === 'web') {
       setSuggestions([])
       return
     }
 
-    const delayDebounceFn = setTimeout(async () => {
+    const delayDebounce = setTimeout(async () => {
       try {
         const { data, error } = await supabase
           .from('onb_web_index')
           .select('title')
-          .eq('category', activeTab)
-          .ilike('title', '%' + searchQuery + '%')
+          .eq('category', tab)
+          .ilike('title', '%' + query + '%')
           .limit(5)
 
         if (!error && data) {
@@ -36,33 +36,33 @@ export default function OnbSearchHome() {
       }
     }, 250)
 
-    return () => clearTimeout(delayDebounceFn)
-  }, [searchQuery, activeTab])
+    return () => clearTimeout(delayDebounce)
+  }, [query, tab])
 
-  // 🌟 دالة البحث الفائقة والتقليدية الخالصة - حظر كامل لأي أكواد تشويه
+  // دالة البحث المصححة بأسهل صياغة نصوص في الويب
   const handleMasterSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!searchQuery.trim()) return
+    const cleanWord = query.trim()
+    if (!cleanWord) return
 
     setLoading(true)
     setSearched(true)
     setSuggestions([])
 
-    // توجيه تقليدي مبسط جداً خالي تماماً من الأقواس المعقدة
-    if (activeTab === 'web') {
+    // توجيه تقليدي خالص 100% بدون أي أقواس أو دمج معقد يربك السيرفر
+    if (tab === 'web') {
       setLoading(false)
-      const cleanWord = searchQuery.trim()
-      window.open("https://google.com" + cleanWord, '_blank')
+      window.location.href = "https://google.com" + encodeURIComponent(cleanWord)
       return
     }
 
-    // البحث داخل قاعدة البيانات للأقسام الأخرى
+    // البحث في قاعدة البيانات
     try {
       const { data, error } = await supabase
         .from('onb_web_index')
         .select('*')
-        .eq('category', activeTab)
-        .textSearch('search_vector', searchQuery, { config: 'arabic', type: 'plain' })
+        .eq('category', tab)
+        .textSearch('search_vector', cleanWord, { config: 'arabic', type: 'plain' })
 
       if (!error && data) {
         setResults(data)
@@ -104,9 +104,9 @@ export default function OnbSearchHome() {
         )}
 
         <div className="flex gap-2 bg-gray-100 p-1 rounded-xl text-xs font-bold text-gray-600 shadow-inner">
-          <button type="button" onClick={() => { setActiveTab('web'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'web' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🔍 الويب العام</button>
-          <button type="button" onClick={() => { setActiveTab('cars'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'cars' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏎️ السيارات</button>
-          <button type="button" onClick={() => { setActiveTab('realestate'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${activeTab === 'realestate' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏢 العقارات</button>
+          <button type="button" onClick={() => { setTab('web'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${tab === 'web' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🔍 الويب العام</button>
+          <button type="button" onClick={() => { setTab('cars'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${tab === 'cars' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏎️ السيارات</button>
+          <button type="button" onClick={() => { setTab('realestate'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${tab === 'realestate' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏢 العقارات</button>
         </div>
 
         <div className="w-full max-w-xl relative">
@@ -114,9 +114,9 @@ export default function OnbSearchHome() {
             <input 
               type="text" 
               placeholder="اكتب ما تبحث عنه باللغة العربية..."
-              value={searchQuery}
+              value={query}
               className="w-full bg-white border border-gray-250 rounded-2xl pl-16 pr-6 py-4 text-right font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:shadow-md transition shadow-sm"
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
             />
             <button type="submit" className="absolute left-3 top-2.5 bg-gray-900 text-white font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-blue-600 transition">
               بحث 🚀
@@ -130,7 +130,7 @@ export default function OnbSearchHome() {
                   key={index}
                   type="button"
                   onClick={() => {
-                    setSearchQuery(sugar)
+                    setQuery(sugar)
                     setSuggestions([])
                   }}
                   className="w-full text-right px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-blue-600 border-b border-gray-50 last:border-0 flex items-center gap-2 transition"
@@ -154,7 +154,7 @@ export default function OnbSearchHome() {
             </div>
           ))}
 
-          {searched && results.length === 0 && !loading && activeTab !== 'web' && (
+          {searched && results.length === 0 && !loading && tab !== 'web' && (
             <p className="text-center text-xs text-gray-400 bg-gray-50 p-6 rounded-xl border">📥 لم نجد نتائج مطابقة تماماً في كشافاتنا الحالية لبلدك. جرب كلمات أخرى!</p>
           )}
         </section>
@@ -169,6 +169,7 @@ export default function OnbSearchHome() {
     </main>
   )
 }
+
 
 
 
