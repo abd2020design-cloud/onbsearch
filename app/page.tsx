@@ -39,7 +39,7 @@ export default function OnbSearchHome() {
     return () => clearTimeout(delayDebounceFn)
   }, [searchQuery, activeTab])
 
-  // دالة البحث المصححة بأسهل وأضمن صياغة نصوص في الويب متوافقة مع السيرفر
+  // 🌟 دالة البحث الفائقة والتقليدية الخالصة - حظر كامل لأي أكواد تشويه
   const handleMasterSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return
@@ -48,11 +48,11 @@ export default function OnbSearchHome() {
     setSearched(true)
     setSuggestions([])
 
-    // توجيه مستقر وآمن بدون علامات مائلة ومحمي تماماً
+    // توجيه تقليدي مبسط جداً خالي تماماً من الأقواس المعقدة
     if (activeTab === 'web') {
       setLoading(false)
-      const correctGoogleUrl = "https://google.com" + encodeURIComponent(searchQuery)
-      window.open(correctGoogleUrl, '_blank')
+      const cleanWord = searchQuery.trim()
+      window.open("https://google.com" + cleanWord, '_blank')
       return
     }
 
@@ -113,7 +113,7 @@ export default function OnbSearchHome() {
           <form onSubmit={handleMasterSearch} className="w-full relative">
             <input 
               type="text" 
-              placeholder={activeTab === 'web' ? 'ابحث في الويب العربي والعالمي بذكاء...' : 'اكتب ما تبحث عنه باللغة العربية...'}
+              placeholder="اكتب ما تبحث عنه باللغة العربية..."
               value={searchQuery}
               className="w-full bg-white border border-gray-250 rounded-2xl pl-16 pr-6 py-4 text-right font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:shadow-md transition shadow-sm"
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -123,7 +123,6 @@ export default function OnbSearchHome() {
             </button>
           </form>
 
-          {/* لوحة الاقتراحات التلقائية المنسدلة القياسية */}
           {suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 bg-white border border-gray-150 rounded-2xl mt-2 shadow-lg overflow-hidden z-50 text-right">
               {suggestions.map((sugar, index) => (
@@ -170,6 +169,7 @@ export default function OnbSearchHome() {
     </main>
   )
 }
+
 
 
 
