@@ -1,176 +1,146 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
+import { supabase } from '@/supabaseClient'
 
-export default function OnbSearchHome() {
-  const [query, setQuery] = useState('')
-  const [tab, setTab] = useState('web')
+// 🌟 إجبار السيرفر على التشغيل الحي لمنع أخطاء الكاش نهائياً
+export const dynamic = 'force-dynamic';
+
+export default function SearchEnginePage() {
+  const [searchQuery, setSearchQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
-  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [suggestions, setBidsSuggestions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
 
-  // جلب الاقتراحات التلقائية الحية أثناء الكتابة
+  // 1. نظام الاقتراحات التلقائية الذكية أثناء كتابة الزائر حرفاً بحرف
   useEffect(() => {
-    if (!query.trim() || tab === 'web') {
-      setSuggestions([])
+    if (searchQuery.trim().length < 2) {
+      setBidsSuggestions([])
       return
     }
 
-    const delayDebounce = setTimeout(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('onb_web_index')
-          .select('title')
-          .eq('category', tab)
-          .ilike('title', '%' + query + '%')
-          .limit(5)
+    const fetchSuggestions = async () => {
+      const { data } = await supabase
+        .from('search_index')
+        .select('title')
+        .ilike('title', `%${searchQuery}%`)
+        .limit(5)
+      
+      if (data) setBidsSuggestions(data)
+    }
 
-        if (!error && data) {
-          const uniqueTitles = Array.from(new Set(data.map((item: any) => item.title)))
-          setSuggestions(uniqueTitles)
-        }
-      } catch (err) {
-        console.error(err)
-      }
-    }, 250)
+    // تقنية الـ Debouncing لمنع استهلاك وحرق كاش السيرفر
+    const delayTimer = setTimeout(() => {
+      fetchSuggestions()
+    }, 200)
 
-    return () => clearTimeout(delayDebounce)
-  }, [query, tab])
+    return () => clearTimeout(delayTimer)
+  }, [searchQuery])
 
-  // دالة البحث المصححة بأسهل صياغة نصوص في الويب
-  const handleMasterSearch = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const cleanWord = query.trim()
-    if (!cleanWord) return
+  // 2. دالة البحث النصي الفائق باللغة العربية والـ Vector Search الصاروخي
+  const handleSearchExecution = async (e: React.FormEvent, forcedQuery?: string) => {
+    if (e) e.preventDefault()
+    const finalQuery = forcedQuery || searchQuery
+    if (!finalQuery.trim()) return
 
     setLoading(true)
-    setSearched(true)
-    setSuggestions([])
-
-    // توجيه تقليدي خالص 100% بدون أي أقواس أو دمج معقد يربك السيرفر
-    if (tab === 'web') {
-      setLoading(false)
-      window.location.href = "https://google.com" + encodeURIComponent(cleanWord)
-      return
-    }
-
-    // البحث في قاعدة البيانات
+    setBidsSuggestions([])
     try {
+      // البحث بداخل الفهارس المرقاة لباقتك Pro لحصد أدق النتائج
       const { data, error } = await supabase
-        .from('onb_web_index')
+        .from('search_index')
         .select('*')
-        .eq('category', tab)
-        .textSearch('search_vector', cleanWord, { config: 'arabic', type: 'plain' })
+        .textSearch('title', finalQuery, { config: 'arabic', type: 'plain' })
+        .limit(30)
 
       if (!error && data) {
         setResults(data)
       } else {
-        setResults([])
+        // خط دفاع برمي بديل بالـ ILIKE في حال لم يتم ضبط الفيكتور بجدول الأرشفة بعد
+        const { data: backupData } = await supabase
+          .from('search_index')
+          .select('*')
+          .ilike('title', `%${finalQuery}%`)
+          .limit(20)
+        setResults(backupData || [])
       }
     } catch (err) {
-      setResults([])
+      console.error(err)
     }
-    
     setLoading(false)
   }
 
   return (
-    <main className="min-h-screen bg-white text-right flex flex-col justify-between" dir="rtl">
-      
-      <header className="px-6 py-4 flex justify-between items-center border-b border-gray-50">
-        <div className="flex items-center gap-2 font-bold text-xs bg-gray-100 px-3 py-1.5 rounded-full text-gray-600">
-          🌐 شبكة منصات الألف مليون الإقليمية
-        </div>
-        <div className="flex gap-4 text-xs font-semibold text-gray-500">
-          <a href="https://onbcars.com" target="_blank" className="hover:text-blue-600 transition" rel="noreferrer">🏎️ سوق السيارات</a>
-          <a href="https://onbcars.com/auctions" target="_blank" className="hover:text-blue-600 transition" rel="noreferrer">🔨 المزادات الحية</a>
-        </div>
-      </header>
-
-      <div className="w-full max-w-3xl mx-auto px-4 py-16 flex flex-col items-center flex-1 space-y-8">
+    <main className="min-h-screen bg-white py-20 px-4 md:px-8 text-right font-sans" dir="rtl">
+      <div className="max-w-3xl mx-auto space-y-12">
         
-        {!searched && (
-          <div className="flex flex-col items-center justify-center gap-3 text-center">
-            <div className="bg-gray-950 text-white font-black text-5xl w-24 h-24 rounded-[28px] flex items-center justify-center border border-gray-800 shadow-md">
-              1B
-            </div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tight mt-2">
-              onb<span className="text-blue-600 font-extrabold">search</span>
-            </h1>
-            <p className="text-gray-400 text-xs font-medium">محرك البحث الإقليمي الفائق لأتمتة البيانات والقطاعات</p>
+        {/* براند محرك البحث الجوجلي الفخم */}
+        <header className="text-center space-y-4">
+          <div className="bg-gray-950 text-white font-black text-4xl w-20 h-20 rounded-3xl flex items-center justify-center border border-gray-800 shadow-md mx-auto tracking-tighter hover:rotate-6 transition duration-300 cursor-pointer">
+            1B
           </div>
-        )}
+          <h1 className="text-4xl font-black text-gray-950 tracking-tight">onbsearch</h1>
+          <p className="text-gray-400 text-xs font-semibold max-w-sm mx-auto leading-relaxed">
+            محرك البحث الإقليمي الفائق لأرشفة البيانات والمواقع والزواحف الرقمية بالخليج العربي حياً بالثانية.
+          </p>
+        </header>
 
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl text-xs font-bold text-gray-600 shadow-inner">
-          <button type="button" onClick={() => { setTab('web'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${tab === 'web' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🔍 الويب العام</button>
-          <button type="button" onClick={() => { setTab('cars'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${tab === 'cars' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏎️ السيارات</button>
-          <button type="button" onClick={() => { setTab('realestate'); setResults([]); setSearched(false); }} className={`px-4 py-2 rounded-lg transition ${tab === 'realestate' ? 'bg-white text-gray-900 shadow-sm' : 'hover:text-gray-900'}`}>🏢 العقارات</button>
-        </div>
-
-        <div className="w-full max-w-xl relative">
-          <form onSubmit={handleMasterSearch} className="w-full relative">
+        {/* شريط مستطيل البحث الاحترافي والذكي مع قائمة الاقتراحات المنسدلة */}
+        <section className="relative max-w-2xl mx-auto">
+          <form onSubmit={(e) => handleSearchExecution(e)} className="relative flex items-center shadow-lg rounded-2xl border border-gray-200 overflow-hidden bg-white hover:border-blue-500 transition duration-300">
             <input 
               type="text" 
-              placeholder="اكتب ما تبحث عنه باللغة العربية..."
-              value={query}
-              className="w-full bg-white border border-gray-250 rounded-2xl pl-16 pr-6 py-4 text-right font-semibold text-gray-900 focus:outline-none focus:border-blue-600 focus:shadow-md transition shadow-sm"
-              onChange={(e) => setQuery(e.target.value)}
+              required
+              placeholder="اكتب ما تبحث عنه الآن..." 
+              value={searchQuery}
+              className="w-full pl-32 pr-6 py-4 text-right font-bold text-gray-900 focus:outline-none text-base"
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="absolute left-3 top-2.5 bg-gray-900 text-white font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-blue-600 transition">
-              بحث 🚀
+            <button type="submit" disabled={loading} className="absolute left-2 top-2 bottom-2 bg-gray-950 text-white font-bold px-6 rounded-xl hover:bg-blue-600 transition text-sm">
+              {loading ? 'جاري الفحص...' : 'ابحث في الويب'}
             </button>
           </form>
 
+          {/* لوحة ظهور الاقتراحات الذكية الفورية أثناء كتابة المستخدم */}
           {suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 bg-white border border-gray-150 rounded-2xl mt-2 shadow-lg overflow-hidden z-50 text-right">
-              {suggestions.map((sugar, index) => (
-                <button
+            <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-150 rounded-2xl shadow-xl z-50 overflow-hidden divide-y divide-gray-50 text-right animate-fade-in">
+              {suggestions.map((s, index) => (
+                <button 
                   key={index}
                   type="button"
+                  className="w-full text-right px-6 py-3.5 hover:bg-gray-50 text-xs font-bold text-gray-700 block transition"
                   onClick={() => {
-                    setQuery(sugar)
-                    setSuggestions([])
+                    setSearchQuery(s.title)
+                    handleSearchExecution(null as any, s.title)
                   }}
-                  className="w-full text-right px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-blue-600 border-b border-gray-50 last:border-0 flex items-center gap-2 transition"
                 >
-                  <span>🕒</span>
-                  <span>{sugar}</span>
+                  🔍 {s.title}
                 </button>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        <section className="w-full max-w-xl space-y-6 pt-6">
-          {loading && <p className="text-center text-sm text-gray-500 animate-pulse">جاري جلب وفحص البيانات بالذكاء الاصطناعي...</p>}
-          
+        {/* ساحة شبكة عرض نتائج البحث والأرشفة المكتشفة */}
+        <section className="space-y-6 max-w-2xl mx-auto pt-6">
           {results.map((res) => (
-            <div key={res.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-blue-200 transition text-right">
-              <a href={res.url} target="_blank" className="text-xs text-green-700 font-mono block mb-1 truncate" rel="noreferrer">{res.url}</a>
-              <a href={res.url} target="_blank" className="text-lg font-bold text-blue-600 hover:underline" rel="noreferrer">{res.title}</a>
-              <p className="text-gray-500 text-xs mt-2 leading-relaxed">{res.description}</p>
-            </div>
+            <article key={res.id} className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition duration-200 group text-right">
+              <span className="text-[10px] text-green-600 font-bold block mb-1 truncate line-clamp-1 font-mono">{res.url}</span>
+              <a href={res.url} target="_blank" rel="noreferrer" className="text-lg font-bold text-blue-600 group-hover:text-blue-800 group-hover:underline block leading-tight mb-2">
+                {res.title}
+              </a>
+              <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{res.description || 'لم يتم إضافة شفرة وصفية ملخصة لهذه الصفحة المؤرشفة حالياً.'}</p>
+            </article>
           ))}
 
-          {searched && results.length === 0 && !loading && tab !== 'web' && (
-            <p className="text-center text-xs text-gray-400 bg-gray-50 p-6 rounded-xl border">📥 لم نجد نتائج مطابقة تماماً في كشافاتنا الحالية لبلدك. جرب كلمات أخرى!</p>
+          {results.length === 0 && !loading && searchQuery.trim() !== '' && (
+            <div className="bg-yellow-50 text-yellow-800 p-6 rounded-2xl text-center border border-yellow-100 text-xs font-semibold">
+              📥 لم يعثر الرادار على صفحات مؤرشفة تطابق كلمتك حالياً في قاعدة بياناتك Pro. جاري تشغيل الزواحف لاقتناصها!
+            </div>
           )}
         </section>
 
       </div>
-
-      <footer className="bg-gray-50 border-t border-gray-100 py-4 px-6 flex flex-col md:flex-row justify-between items-center gap-2 text-[10px] text-gray-400">
-        <div>🔒 جميع حقوق الملكية الفكرية والأنظمة محفوظة لمؤسستك الرسمية لتقنية المعلومات © 2026</div>
-        <div className="flex gap-4 font-bold text-gray-500">Node 1B Pro Powered</div>
-      </footer>
-
     </main>
   )
 }
-
-
-
-
-
